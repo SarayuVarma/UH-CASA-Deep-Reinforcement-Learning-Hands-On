@@ -3,13 +3,13 @@ import random
 
 class Environment:
     def __init__(self):
-        self.steps_left = 10
+        self.steps_left = 10 # agent moves 10 steps and stops
 
     def get_observation(self):
-        return [0.0, 0.0, 0.0]
+        return [0.0, 0.0, 0.0] # dummy env so no states to move in, just return a dummy observation
 
     def get_actions(self):
-        return [0, 1]
+        return [0, 1] # left, right
 
     def is_done(self):
         return self.steps_left == 0
@@ -18,7 +18,7 @@ class Environment:
         if self.is_done():
             raise Exception("Game is over")
         self.steps_left -= 1
-        return random.random()
+        return random.random() # choose a random reward for each action
 
 
 class Agent:
@@ -29,7 +29,8 @@ class Agent:
         current_obs = env.get_observation()
         actions = env.get_actions()
         reward = env.action(random.choice(actions))
-        self.total_reward += reward
+        print(reward)
+        self.total_reward += reward # sum of random rewards for 10 steps
 
 
 if __name__ == "__main__":
@@ -39,4 +40,4 @@ if __name__ == "__main__":
     while not env.is_done():
         agent.step(env)
 
-    print("Total reward got: %.4f" % agent.total_reward)
+    print("Total reward got: %.4f" % agent.total_reward) 
