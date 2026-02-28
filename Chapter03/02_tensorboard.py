@@ -1,7 +1,6 @@
 import math
 from tensorboardX import SummaryWriter
 
-
 if __name__ == "__main__":
     writer = SummaryWriter()
 

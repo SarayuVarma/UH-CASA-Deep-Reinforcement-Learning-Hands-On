@@ -10,13 +10,18 @@ from tensorboardX import SummaryWriter
 
 import torchvision.utils as vutils
 
-import gym
-import gym.spaces
+# pip install "gymnasium[atari]"
+# pip install "ale-py"
+
+import gymnasium as gym
+import gymnasium.spaces
+import ale_py
 
 import numpy as np
 
-log = gym.logger
-log.set_level(gym.logger.INFO)
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 LATENT_VECTOR_SIZE = 100
 DISCR_FILTERS = 64
@@ -113,12 +118,12 @@ class Generator(nn.Module):
 
 
 def iterate_batches(envs, batch_size=BATCH_SIZE):
-    batch = [e.reset() for e in envs]
+    batch = [e.reset()[0] for e in envs]  # Get only the observation from reset()
     env_gen = iter(lambda: random.choice(envs), None)
 
     while True:
         e = next(env_gen)
-        obs, reward, is_done, _ = e.step(e.action_space.sample())
+        obs, reward, is_done, truncated, info = e.step(e.action_space.sample())  # Add truncated
         if np.mean(obs) > 0.01:
             batch.append(obs)
         if len(batch) == batch_size:
@@ -126,7 +131,7 @@ def iterate_batches(envs, batch_size=BATCH_SIZE):
             batch_np = np.array(batch, dtype=np.float32) * 2.0 / 255.0 - 1.0
             yield torch.tensor(batch_np)
             batch.clear()
-        if is_done:
+        if is_done or truncated:  # Check both done and truncated
             e.reset()
 
 
@@ -136,7 +141,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     device = torch.device("cuda" if args.cuda else "cpu")
-    envs = [InputWrapper(gym.make(name)) for name in ('Breakout-v0', 'AirRaid-v0', 'Pong-v0')]
+    envs = [InputWrapper(gym.make(name, render_mode="rgb_array")) for name in ('ALE/Breakout-v5', 'ALE/AirRaid-v5', 'ALE/Pong-v5')]
     input_shape = envs[0].observation_space.shape
 
     net_discr = Discriminator(input_shape=input_shape).to(device)
